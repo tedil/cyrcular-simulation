@@ -16,4 +16,4 @@ For simulation of nanopore reads with nanosim, an error model is required. This 
 
 # Additional noise
 
-Additional non-circular WGS nanopore reads can be simulated at the specified coverage. These will be merged with the circular reads before calling.
+Additional non-circular WGS nanopore reads can be simulated at the specified coverage. These will be merged with the circular reads.
