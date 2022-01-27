@@ -14,6 +14,7 @@ simulation:
     name: "sample"
     sample: "resources/sample.fastq.gz"
 
+
   # additional non-circular noise in the form of nanopore WGS reads which are added to circular reads above
   wgs_noise:
     coverage: 0.01

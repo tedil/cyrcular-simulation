@@ -127,6 +127,8 @@ def reference_size(wildcards):
 
 def all_input(wildcards):
     model_name = config["simulation"]["error_model"]["name"]
-    inputs = [f"results/simulation/model/{model_name}/{model_name}.dir"]
+    inputs = ["results/calling/config/samples.tsv", "results/calling/config/units.tsv"]
+    inputs += [f"results/simulation/model/{model_name}/{model_name}.dir"]
     inputs += simulation_targets()
+    inputs += [f"results/validation/{model_name}.stats.tsv"]
     return inputs
