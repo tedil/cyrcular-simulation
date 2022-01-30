@@ -1,0 +1,20 @@
+from snakemake.utils import min_version
+
+min_version("6.15")
+
+
+configfile: "config/config.yaml"
+
+
+scattergather:
+    calling=12,
+    annotation=12,
+
+
+include: "rules/common.smk"
+include: "rules/simulation.smk"
+
+
+rule all:
+    input:
+        lambda wc: all_input(wc),

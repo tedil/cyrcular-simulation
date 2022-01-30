@@ -1,0 +1,22 @@
+simulation:
+
+  # file containing regions that are to be simulated using nanosim
+  regions: "config/example_regions.tsv"
+
+  # reference to be used for simulation
+  reference: &ref
+    name: "example_ref"
+    path: "resources/example_ref.fasta"
+
+
+  # construct nanosim error model from this sample
+  error_model:
+    name: "sample"
+    sample: "resources/sample.fastq.gz"
+
+  # additional non-circular noise in the form of nanopore WGS reads which are added to circular reads above
+  wgs_noise:
+    coverage: 0.01
+    
+  # simulate regions at the given target coverages
+  target_coverages: [1]

@@ -1,0 +1,79 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+
+description: snakemake configuration file
+
+type: object
+
+definitions:
+  filterentry:
+    type: object
+    additionalProperties:
+      type: string
+
+  evententry:
+    type: object
+    properties:
+      varlociraptor:
+        type: array
+        items: 
+          type: string
+      filter:
+        type: string
+      local:
+        type: boolean
+      threshold:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+
+
+properties:
+  simulation:
+    type: object
+    properties:
+      regions:
+        type: string
+
+      reference:
+        type: object
+        properties:
+          name:
+            type: string
+          path:
+            type: string
+        required:
+          - name
+          - path
+
+      error_model:
+        type: object
+        properties:
+          name:
+            type: string
+          sample:
+            type: string
+        required:
+          - name
+          - sample
+
+      wgs_noise:
+        type: object
+        properties:
+          coverage:
+            type: number
+        required:
+          - coverage
+
+      target_coverages:
+        type: array
+        items:
+          type: integer
+    required:
+      - regions
+      - reference
+      - error_model
+      - wgs_noise
+      - target_coverages
+
+required:
+  - simulation

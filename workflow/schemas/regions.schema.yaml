@@ -1,0 +1,28 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+
+description: an entry in the sample sheet
+properties:
+  name:
+    type: string
+    description: A name for a specific region. (alphanumeric string, may additionally contain '_', '-' and '.')
+    pattern: '^[a-zA-Z_0-9-\.]+$'
+  chrom:
+    type: string
+    description: reference/chromosome/target name. (alphanumeric string, may additionally contain '_', '-' and '.')
+    pattern: '^[a-zA-Z_0-9-\.]+$'
+  start:
+    type: integer
+    description: start locus
+  stop:
+    type: integer
+    description: end locus
+  length:
+    type: integer
+    description: length of region (end - start), optional
+
+
+required:
+  - name
+  - chrom
+  - start
+  - stop
