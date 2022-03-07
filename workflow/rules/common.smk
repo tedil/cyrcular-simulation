@@ -21,12 +21,24 @@ highest_coverage = np.max(config["simulation"]["target_coverages"])
 
 
 def simulation_target_params():
-    model_name = config["simulation"]["error_model"]["name"]
+    model_name = config["simulation"]["error_model"]["nanopore"]["name"]
     models = [model_name]
+    model_name_illumina = (
+        config["simulation"]["error_model"].get("illumina", {}).get("name", None)
+    )
+    if model_name_illumina:
+        models += [model_name_illumina]
     coverages = config["simulation"]["target_coverages"]
     return {
         model: {
-            coverage: f"results/simulation/merged_reads/{model}/{coverage}/reads.fastq.gz"
+            coverage: [
+                f"results/simulation/merged_reads/{model}/{coverage}/reads.fastq.gz"
+            ]
+            if model != model_name_illumina
+            else [
+                f"results/simulation/merged_reads/{model}/{coverage}/reads_1.fastq.gz",
+                f"results/simulation/merged_reads/{model}/{coverage}/reads_2.fastq.gz",
+            ]
             for coverage in coverages
         }
         for model in models
@@ -35,17 +47,23 @@ def simulation_target_params():
 
 def simulation_targets():
     params = simulation_target_params()
-    return [fq for model, info in params.items() for _coverage, fq in info.items()]
+    return [
+        f
+        for model, info in params.items()
+        for _coverage, fq in info.items()
+        for f in fq
+    ]
 
 
 def make_samplesheet():
     params = simulation_target_params()
     s = []
     for model, info in params.items():
-        for coverage, fq in info.items():
+        for coverage, fqs in info.items():
             group = sample = f"{model}_{coverage}"
             s.append([group, sample, "nanopore"])
     samples = pd.DataFrame(columns=["group", "sample", "platform"], data=s)
+    print(samples)
     return samples
 
 
@@ -54,12 +72,21 @@ samples = make_samplesheet()
 
 def make_unitsheet():
     params = simulation_target_params()
+    print(params)
     u = []
     for model, info in params.items():
-        for coverage, fq in info.items():
+        for coverage, fqs in info.items():
             group = sample = f"{model}_{coverage}"
-            u.append([sample, "0", fq, None])
+            if len(fqs) == 1:
+                u.append([sample, "0", fqs[0], None])
+            elif len(fqs) == 2:
+                u.append([sample, "0", fqs[0], fqs[1]])
+            else:
+                raise ValueError(
+                    f"Expected either single or paired-end data but got {len(fqs)} fastq files"
+                )
     units = pd.DataFrame(columns=["sample", "unit", "fq1", "fq2"], data=u)
+    print(units)
     return units
 
 

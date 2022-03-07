@@ -19,6 +19,117 @@ rule merge_reads:
         """cat {input.fastqs} | pigz -c > {output} 2> {log}"""
 
 
+rule merge_reads_illumina:
+    input:
+        fq1=expand(
+            "results/simulation/circular_reads/{ref}/illumina/{coverage}/{ref}_1.fastq.gz",
+            ref=list(regions["name"]),
+            allow_missing=True,
+        )
+        + [
+            f'results/simulation/wgs_reads/whole_genome/illumina/{config["simulation"]["reference"]["name"]}_1.fastq.gz'
+        ],
+        fq2=expand(
+            "results/simulation/circular_reads/{ref}/illumina/{coverage}/{ref}_2.fastq.gz",
+            ref=list(regions["name"]),
+            allow_missing=True,
+        )
+        + [
+            f'results/simulation/wgs_reads/whole_genome/illumina/{config["simulation"]["reference"]["name"]}_2.fastq.gz',
+        ],
+    output:
+        fq1="results/simulation/merged_reads/{model}/{coverage}/reads_1.fastq.gz",
+        fq2="results/simulation/merged_reads/{model}/{coverage}/reads_2.fastq.gz",
+    conda:
+        "../envs/pigz.yaml"
+    log:
+        "logs/merge_reads/{model}_{coverage}.log",
+    shell:
+        """pigz -dc {input.fastqs} | pigz -c > {output} 2> {log}"""
+
+
+rule simulate_circular_reads_illumina_highest_coverage_only:
+    input:
+        reference="results/simulation/regions/{name}.fasta",
+    output:
+        out=directory(
+            f"results/simulation/circular_reads/{{name}}/illumina/{highest_coverage}"
+        ),
+        fq1=f"results/simulation/circular_reads/{{name}}/illumina/{highest_coverage}/{{name}}_1.fastq.gz",
+        fq2=f"results/simulation/circular_reads/{{name}}/illumina/{highest_coverage}/{{name}}_2.fastq.gz",
+    threads: 1
+    conda:
+        "../envs/readSimulator.yaml"
+    log:
+        "logs/simulate_circular_reads_illumina_highest_coverage_only/{name}_illumina.log",
+    params:
+        depth=highest_coverage,
+        seed=272977087,
+    shell:
+        """
+        readSimulator.py \
+        --input {input.reference} \
+        --simulator art \
+        --simulator_path $(which art_illumina) \
+        --outdir {output.out} \
+        --iterations 10 \
+        --readlen 100 \
+        --depth {params.depth} \
+        --opts '-m 300 -s 25 -rs {params.seed} -ss HS20 -na'
+        """
+
+
+rule simulate_circular_reads_illumina_by_subsampling:
+    input:
+        reference="results/simulation/regions/{name}.fasta",
+        fq1=f"results/simulation/circular_reads/{{name}}/illumina/{highest_coverage}/{{name}}_1.fastq.gz",
+        fq2=f"results/simulation/circular_reads/{{name}}/illumina/{highest_coverage}/{{name}}_2.fastq.gz",
+    output:
+        fq1="results/simulation/circular_reads/{name}/illumina/{coverage}/{name}_1.fastq.gz",
+        fq2="results/simulation/circular_reads/{name}/illumina/{coverage}/{name}_2.fastq.gz",
+    threads: 1
+    conda:
+        "../envs/seqtk.yaml"
+    log:
+        "logs/simulate_circular_reads_illumina_by_subsampling/{name}_illumina_{coverage}.log",
+    params:
+        fraction=lambda wc: float(wc.coverage) / float(highest_coverage),
+        seed=272977087,
+    shell:
+        """
+        seqtk sample -2 -s {params.seed} {input.fq1} {params.fraction} > {output.fq1} 2> {log}
+        seqtk sample -2 -s {params.seed} {input.fq2} {params.fraction} > {output.fq2} 2>> {log}
+        """
+
+
+rule simulate_wgs_reads_illumina:
+    input:
+        reference=config["simulation"]["reference"]["path"],
+    output:
+        out=directory("results/simulation/wgs_reads/whole_genome/illumina/"),
+        fq1=f'results/simulation/wgs_reads/whole_genome/illumina/{config["simulation"]["reference"]["name"]}_1.fastq.gz',
+        fq2=f'results/simulation/wgs_reads/whole_genome/illumina/{config["simulation"]["reference"]["name"]}_2.fastq.gz',
+    params:
+        depth=float(config["simulation"]["wgs_noise"]["coverage"]),
+        seed=272977087,
+    log:
+        "logs/simulate_wgs_reads/illumina.log",
+    conda:
+        "../envs/readSimulator.yaml"
+    shell:
+        """
+        readSimulator.py \
+        --input {input.reference} \
+        --simulator art \
+        --simulator_path $(which art_illumina) \
+        --outdir {output.out} \
+        --iterations 1 \
+        --readlen 100 \
+        --depth {params.depth} \
+        --opts '-m 300 -s 25 -rs {params.seed} -ss HS20 -na'
+        """
+
+
 rule simulate_wgs_reads:
     input:
         reference=config["simulation"]["reference"]["path"],
@@ -105,13 +216,13 @@ rule simulate_circular_reads_by_subsampling:
         """
 
 
-ruleorder: simulate_circular_reads_highest_coverage_only > simulate_circular_reads_by_subsampling
+ruleorder: simulate_circular_reads_illumina_highest_coverage_only > simulate_circular_reads_highest_coverage_only > simulate_circular_reads_by_subsampling
 
 
 # TODO check for extension and unzip if needed
-rule pipe_model_fastq:
+rule pipe_nanopore_model_fastq:
     input:
-        reads=config["simulation"]["error_model"]["sample"],
+        reads=config["simulation"]["error_model"]["nanopore"]["sample"],
     output:
         pipe("tmp/{model}_sample.fastq"),
     log:
@@ -126,7 +237,7 @@ rule pipe_model_fastq:
         """
 
 
-rule build_error_model:
+rule build_nanopore_error_model:
     input:
         reference=config["simulation"]["reference"]["path"],
         reads="tmp/{model}_sample.fastq",

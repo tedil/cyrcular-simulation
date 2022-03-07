@@ -48,13 +48,28 @@ properties:
       error_model:
         type: object
         properties:
-          name:
-            type: string
-          sample:
-            type: string
+          nanopore:
+            type: object
+            properties:
+              name:
+                type: string
+              sample:
+                type: string
+            required:
+              - name
+              - sample
+          illumina:
+            type: object
+            properties:
+              name:
+                type: string
+              sequencer:
+                type: string
+            required:
+              - name
+              - sequencer
         required:
-          - name
-          - sample
+          - nanopore
 
       wgs_noise:
         type: object
