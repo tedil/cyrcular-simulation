@@ -67,6 +67,9 @@ rule simulate_circular_reads_illumina_highest_coverage_only:
     params:
         depth=highest_coverage,
         seed=272977087,
+        sequencer=config["simulation"]["error_model"]
+        .get("illumina", {})
+        .get("sequencer", "HS20"),
     shell:
         """
         readSimulator.py \
@@ -77,7 +80,7 @@ rule simulate_circular_reads_illumina_highest_coverage_only:
         --iterations 10 \
         --readlen 100 \
         --depth {params.depth} \
-        --opts '-m 300 -s 25 -rs {params.seed} -ss HS20 -na'
+        --opts '-m 300 -s 25 -rs {params.seed} -ss {params.sequencer} -na'
         """
 
 
