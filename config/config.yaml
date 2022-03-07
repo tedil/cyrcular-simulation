@@ -18,7 +18,7 @@ simulation:
     # optional illumina reads
     #illumina:
     #  name: "illumina"
-    #  sequencer: "HS2000"
+    #  sequencer: "HS20"
   # additional non-circular noise in the form of nanopore WGS reads which are added to circular reads above
   wgs_noise:
     coverage: 0.01
