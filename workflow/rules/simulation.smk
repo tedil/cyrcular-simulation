@@ -45,7 +45,9 @@ rule merge_reads_illumina:
     log:
         "logs/merge_reads/{model}_{coverage}.log",
     shell:
-        """pigz -dc {input.fastqs} | pigz -c > {output} 2> {log}"""
+        """pigz -dc {input.fq1} | pigz -c > {output.fq1} 2> {log}
+        pigz -dc {input.fq2} | pigz -c > {output.fq2} 2>> {log}
+        """
 
 
 rule simulate_circular_reads_illumina_highest_coverage_only:
